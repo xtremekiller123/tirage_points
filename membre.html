@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Espace Membre{% endblock %}
+{% block content %}
+<h1>Mon espace</h1>
+<p>Bienvenue, <b>{{ user['nom'] }}</b> !</p>
+<p>Points disponibles : <b>{{ user['points'] }}</b></p>
+<p>Mise actuelle pour le tirage : <b>{{ user['mise'] }}</b></p>
+<form method="post" action="/miser">
+    <label>Nouvelle mise (max {{ user['points'] }}): <input type="number" name="mise" min="0" max="{{ user['points'] }}" required></label>
+    <button type="submit" class="big-action-btn">Valider la mise</button>
+</form>
+{% if message %}<div class="success">{{ message }}</div>{% endif %}
+{% if error %}<div class="alert">{{ error }}</div>{% endif %}
+<hr>
+<h2>Tirage en temps réel</h2>
+<div id="tirage-live" style="margin-bottom:1.5em;">
+  <p>Chargement du tirage en cours...</p>
+</div>
+
+<a href="/" class="big-action-btn">Retour</a>
+{% if recent_draws and recent_draws|length > 0 %}
+  <div style="margin:3em auto 0 auto;max-width:520px;">
+    <h3 style="color:#b47bff;text-align:center;font-size:1.1em;margin-bottom:0.6em;">4 derniers tirages</h3>
+    <table style="width:100%;background:rgba(50,0,80,0.07);border-radius:10px;">
+      <tr style="background:#b47bff22;"><th>Gagnant</th><th>Mise</th><th>% chance</th></tr>
+      {% for tirage in recent_draws %}
+      <tr>
+        <td><b>{{ tirage['winner'] }}</b></td>
+        <td>{{ tirage['mise'] }}</td>
+        <td>{{ tirage['percent'] }}%</td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+{% endif %}
+{% if last_draw %}
+  <div style="background:linear-gradient(90deg,#ffe066 0%,#b47bff 100%);color:#4e008e;padding:1em 1.3em;border-radius:14px;font-size:1.08em;font-weight:bold;box-shadow:0 2px 12px #b47bff33;margin:2em auto 0 auto;text-align:center;max-width:500px;">
+    🎉 <b>{{ last_draw['winner'] }}</b> a gagné le dernier tirage !<br>
+    <span style="font-size:0.97em;">Mise : <b>{{ last_draw['mise'] }}</b> | % de chance : <b>{{ last_draw['percent'] }}%</b></span>
+  </div>
+{% endif %}
+<script>
+function updateTirageLive() {
+  fetch('/tirage_status').then(r => r.json()).then(data => {
+    const div = document.getElementById('tirage-live');
+    let html = '';
+
+    if (!data.participants || data.participants.length === 0) {
+      html += '<p style="color:#ff7bc9;">Aucune mise en cours.</p>';
+      div.innerHTML = html;
+      return;
+    }
+    html += `<table style="width:100%;max-width:420px;background:rgba(50,0,80,0.85);border-radius:12px;box-shadow:0 2px 8px #b47bff33;margin-bottom:0.7em;">
+      <tr><th>Nom</th><th>Mise</th><th>% de chance</th></tr>`;
+    for (const p of data.participants) {
+      html += `<tr><td>${p.nom}</td><td>${p.mise}</td><td>${p.chance} %</td></tr>`;
+    }
+    html += `</table>`;
+    html += `<div style="font-size:0.98em;color:#b47bff;margin-top:0.3em;">Total des mises : <b>${data.total}</b></div>`;
+    div.innerHTML = html;
+  });
+}
+updateTirageLive();
+setInterval(updateTirageLive, 5000);
+</script>
+{% endblock %}

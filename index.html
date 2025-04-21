@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Accueil{% endblock %}
+{% block content %}
+<h1>Bienvenue sur Tirage Points</h1>
+{% if user %}
+    <p>Connecté en tant que <b>{{ user['nom'] }}</b>{% if user['isAdmin'] %} (Admin){% endif %}.</p>
+    <form method="post" action="/logout"><button type="submit">Déconnexion</button></form>
+    {% if user['isAdmin'] %}
+        <a href="/admin">Accès admin</a>
+    {% else %}
+        <a href="/membre" class="big-action-btn">Mon espace</a>
+    {% endif %}
+{% else %}
+    <a href="/login" class="big-action-btn">Connexion</a>
+{% endif %}
+<hr>
+{% set membres_sorted = membres|sort(attribute='points', reverse=True) %}
+<div class="top10-container">
+  <h2>🏆 Top 10 Membres</h2>
+  <ol class="top10-list">
+    {% for membre in membres_sorted[:10] %}
+      <li class="top10-item {% if loop.index0 == 0 %}first{% elif loop.index0 == 1 %}second{% elif loop.index0 == 2 %}third{% endif %}">
+        <span class="top10-rank">
+          {% if loop.index0 == 0 %}🥇{% elif loop.index0 == 1 %}🥈{% elif loop.index0 == 2 %}🥉{% else %}{{ loop.index }}{% endif %}
+        </span>
+        <span class="top10-name">{{ membre['nom'] }}</span>
+        <span class="top10-points">{{ membre['points'] }} pts</span>
+      </li>
+    {% endfor %}
+  </ol>
+</div>
+<h2>Classement des membres</h2>
+<button type="button" onclick="const el=document.getElementById('classementMembres');el.style.display=el.style.display==='none'?'table':'none';this.textContent=el.style.display==='none'?'Voir le classement des membres':'Masquer le classement';">Voir le classement des membres</button>
+<table id="classementMembres" style="display:none;margin-top:1em;">
+<tr><th>Position</th><th>Nom</th><th>Points</th></tr>
+{% set membres_sorted = membres|sort(attribute='points', reverse=True) %}
+{% for membre in membres_sorted %}
+<tr>
+  <td>
+    {% if loop.index0 == 0 %}🥇{% elif loop.index0 == 1 %}🥈{% elif loop.index0 == 2 %}🥉{% else %}{{ loop.index }}{% endif %}
+  </td>
+  <td>{{ membre['nom'] }}</td>
+  <td>{{ membre['points'] }}</td>
+</tr>
+{% endfor %}
+</table>
+{% if last_draw %}
+<h2>Dernier tirage</h2>
+<p>Gagnant : <b>{{ last_draw['winner'] }}</b> ({{ last_draw['points'] }} points gagnés)</p>
+{% endif %}
+{% endblock %}

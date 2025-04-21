@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}Admin{% endblock %}
+{% block content %}
+<h1>Espace Administrateur</h1>
+<p>Bienvenue, <b>{{ user['nom'] }}</b> (admin)</p>
+<form method="post" action="/logout"><button type="submit">Déconnexion</button></form>
+<hr>
+<h2>Gestion des membres</h2>
+<form method="post" action="/ajouter_membre" style="margin-bottom:1em;">
+    <input type="text" name="nom" placeholder="Nom unique" required>
+    <input type="number" name="points" placeholder="Points" min="0" required>
+    <button type="submit">Ajouter</button>
+</form>
+<form method="post" action="/supprimer_membre" style="margin-bottom:1em;">
+    <select name="nom">
+        {% for membre in membres %}
+        <option value="{{ membre['nom'] }}">{{ membre['nom'] }}</option>
+        {% endfor %}
+    </select>
+    <button type="submit">Supprimer</button>
+</form>
+<h3>Membres actuels</h3>
+<button type="button" onclick="const el=document.getElementById('tableMembres');el.style.display=el.style.display==='none'?'table':'none';this.textContent=el.style.display==='none'?'Voir la liste des membres':'Masquer la liste';">Voir la liste des membres</button>
+<table id="tableMembres" style="display:none;margin-top:1em;">
+<tr><th>Nom</th><th>Points</th><th>Modifier les points</th></tr>
+{% for membre in membres %}
+<tr>
+  <td>{{ membre['nom'] }}</td>
+  <td>{{ membre['points'] }}</td>
+  <td>
+    <form method="post" action="/modifier_points" style="display:inline;">
+      <input type="hidden" name="nom" value="{{ membre['nom'] }}">
+      <input type="number" name="points" value="{{ membre['points'] }}" min="0" required style="width:70px;">
+      <button type="submit">Valider</button>
+    </form>
+  </td>
+</tr>
+{% endfor %}
+</table>
+<h3>Import/MAJ par JSON</h3>
+<form method="post" action="/import_json" enctype="multipart/form-data">
+    <input type="file" name="jsonfile" accept="application/json" required>
+    <button type="submit">Importer</button>
+</form>
+<div style="display:flex;gap:1em;align-items:center;margin-bottom:1em;">
+  <button type="button" onclick="document.getElementById('jsonPasteZone').style.display='block';this.style.display='none';">Copier/Coller JSON</button>
+  <form method="post" action="/envoyer_points_discord" style="display:inline;">
+    <button type="submit" class="big-action-btn" style="font-size:1em;">Envoyer la liste des points sur Discord</button>
+  </form>
+  <button type="button" class="big-action-btn" style="font-size:1em;" onclick="const zone=document.getElementById('historiqueCopyZone');if(zone.style.display==='block'){zone.style.display='none';}else{fetch('/export_tirages_json').then(r=>r.text()).then(txt=>{zone.style.display='block';document.getElementById('historiqueCopyTextarea').value=txt;});}">Copier historique tirages (points retirés)</button>
+  <form method="post" action="/reset_tirages" style="display:inline;" onsubmit="return confirm('Êtes-vous sûr de vouloir réinitialiser l\'historique des tirages ? Cette action est irréversible.');">
+    <button type="submit" class="big-action-btn" style="font-size:1em;background:#d9534f;color:white;">Réinitialiser historique tirages</button>
+  </form>
+</div>
+<div id="historiqueCopyZone" style="display:none;margin:1em 0;">
+  <textarea id="historiqueCopyTextarea" rows="12" style="width:99%;font-family:monospace;font-size:1em;"></textarea>
+  <div style="text-align:right;"><button onclick="document.getElementById('historiqueCopyTextarea').select();document.execCommand('copy');">Copier</button></div>
+</div>
+<form method="post" action="/import_json_paste" style="margin-top:0.5em;display:none;" id="jsonPasteZone">
+    <textarea name="jsontext" rows="7" cols="50" placeholder="Collez ici le JSON..." required style="font-family:monospace;font-size:1em;width:98%;"></textarea><br>
+    <button type="submit">Mettre à jour</button>
+</form>
+<hr>
+<h2>Tirage</h2>
+<table>
+<tr><th>Nom</th><th>Mise</th><th>% chance</th></tr>
+{% set total_mise = membres | sum(attribute='mise') %}
+{% for membre in membres if membre['mise'] > 0 %}
+<tr>
+  <td>{{ membre['nom'] }}</td>
+  <td>{{ membre['mise'] }}</td>
+  <td>{{ '%.1f' % (100 * membre['mise'] / total_mise if total_mise > 0 else 0) }}%</td>
+</tr>
+{% endfor %}
+</table>
+<form method="post" action="/tirage">
+    <button type="submit">Lancer le tirage</button>
+</form>
+<form method="post" action="/reset_tirage">
+    <button type="submit">Réinitialiser le tirage</button>
+</form>
+<form method="post" action="/reset_mises">
+    <button type="submit">Réinitialiser les mises</button>
+</form>
+{% if draw_history and draw_history|length > 0 %}
+<h3>5 derniers tirages</h3>
+<table style="margin-bottom:1em;width:100%;max-width:600px;background:rgba(50,0,80,0.07);border-radius:10px;">
+  <tr style="background:#b47bff22;"><th>Date/Heure</th><th>Gagnant</th><th>Mise</th><th>% de chance</th><th>Annulation</th></tr>
+  {% set max_draws = 5 %}
+  {% set total = draw_history|length %}
+  {% for tirage in draw_history[(total-max_draws if total-max_draws > 0 else 0):] | reverse %}
+  <tr>
+    <td>{{ total - loop.index0 }}</td>
+    <td><b>{{ tirage['winner'] }}</b></td>
+    <td>{{ tirage['mise'] }}</td>
+    <td>{{ tirage['percent'] }}%</td>
+    <td>
+      {% if tirage.get('annule') %}
+        <span style="color:#ff3b3b;font-weight:bold;">Annulé</span>
+      {% else %}
+        <form method="post" action="/annuler_tirage/{{ total - loop.index0 - 1 }}" style="display:inline;">
+          <button type="submit" onclick="return confirm('Annuler ce tirage et rendre la mise au gagnant ?')">Annuler</button>
+        </form>
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% endif %}
+<a href="/">Retour accueil</a>
+{% endblock %}

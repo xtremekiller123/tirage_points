@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}AbyssEmpireQc{% endblock %}</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap" rel="stylesheet">
+  <audio id="ambiance-music" src="/static/higher_calling.mp3" autoplay loop style="display:none;"></audio>
+  <script>
+    window.addEventListener('DOMContentLoaded', function() {
+      var audio = document.getElementById('ambiance-music');
+      if (audio) {
+        audio.volume = 0.18;
+        // Pour éviter le blocage auto-play sur certains navigateurs, lancer au 1er clic
+        document.body.addEventListener('click', function playOnce() {
+          audio.play();
+          document.body.removeEventListener('click', playOnce);
+        });
+      }
+    });
+  </script>
+</head>
+<body>
+<div class="abyss-title">AbyssEmpireQc</div>
+<div class="container">
+    {% block content %}{% endblock %}
+</div>
+<script src="/static/script.js"></script>
+{% if last_draw and last_draw.winner and last_draw.percent is defined and last_draw.mise is defined %}
+<script>
+  window.addEventListener('DOMContentLoaded', function(){
+    window.showDrawAnnouncement(
+      {{ last_draw.winner|tojson }},
+      {{ last_draw.percent|tojson }},
+      {{ last_draw.mise|tojson }}
+    );
+  });
+</script>
+{% endif %}
+</body>
+</html>

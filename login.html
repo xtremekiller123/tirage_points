@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Connexion{% endblock %}
+{% block content %}
+<h1>Connexion</h1>
+<div style="display: flex; gap: 2em;">
+  <div style="flex:1;">
+    <h2>Connexion membre</h2>
+    <form method="post">
+      <input type="hidden" name="type" value="membre">
+      <label>Nom du membre<br>
+  <input type="text" id="membre-search" placeholder="Recherche rapide..." style="margin-bottom: 0.4em; width: 100%; font-size:1em; border-radius:6px; border:1px solid #b47bff; background:#2d0050; color:#fff; padding:0.4em;">
+  <select name="membre_nom" id="membre-select" required>
+    <option value="">-- Sélectionner --</option>
+    {% for membre in membres %}
+    <option value="{{ membre['nom'] }}">{{ membre['nom'] }}</option>
+    {% endfor %}
+  </select>
+</label><br>
+<script>
+  const membreSearch = document.getElementById('membre-search');
+  const membreSelect = document.getElementById('membre-select');
+  membreSearch.addEventListener('input', function() {
+    const filter = this.value.toLowerCase();
+    for (const option of membreSelect.options) {
+      if(option.value === "") { option.style.display = ""; continue; }
+      option.style.display = option.text.toLowerCase().includes(filter) ? "" : "none";
+    }
+    // Si une seule option correspond, on la sélectionne automatiquement
+    const visibleOptions = Array.from(membreSelect.options).filter(o => o.style.display !== "none" && o.value !== "");
+    if(visibleOptions.length === 1) membreSelect.value = visibleOptions[0].value;
+  });
+</script>
+      <button type="submit" class="big-action-btn">Se connecter</button>
+    </form>
+  </div>
+  <div style="flex:1;">
+    <h2>Admin</h2>
+    <form method="post">
+      <input type="hidden" name="type" value="admin">
+      <label>Nom d'utilisateur<br><input type="text" name="username" required></label><br>
+      <label>Mot de passe<br><input type="password" name="password" required></label><br>
+      <button type="submit" class="big-action-btn">Connexion admin</button>
+    </form>
+  </div>
+</div>
+<div style="text-align:center; margin-top:2em;">
+  <a href="/" class="big-action-btn" style="font-size:1.4em; padding:0.6em 2.2em; display:inline-block; margin-top:1em;">Retour</a>
+</div>
+{% if error %}<div class="alert">{{ error }}</div>{% endif %}
+{% endblock %}
