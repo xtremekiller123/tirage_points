@@ -1,0 +1,10 @@
+Cette musique doit être douce, calme, sans paroles, idéale pour une ambiance relaxante de tirage au sort.
+
+Tu peux remplacer calm_music.mp3 par un vrai fichier mp3 de musique libre de droits (par exemple depuis https://pixabay.com/fr/music/ ou https://www.bensound.com/royalty-free-music/), en téléchargeant un morceau "calm" ou "ambient" et en le renommant calm_music.mp3 dans le dossier static.
+
+Exemples de titres :
+- "Calm Meditation" (Pixabay)
+- "Tenderness" (Bensound)
+- "Relaxing" (Pixabay)
+
+Le lecteur audio du site est déjà prêt pour lire ce fichier en boucle et discrètement.
