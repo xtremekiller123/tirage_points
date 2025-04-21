@@ -453,8 +453,3 @@ if __name__ == '__main__':
     if not os.path.exists(MISES_FILE):
         save_mises([])
     app.run(debug=True)
-import os
-
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))  # Render donne PORT, sinon 5000 en local
-    app.run(host='0.0.0.0', port=port)
